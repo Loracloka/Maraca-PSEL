@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     // Create Vision module
-    Vision *vision = new Vision();
+    Vision *vision = new Vision("224.5.23.2",10002);
 
     // Create actuator module and connect it with the Vision to receive the host address
     Actuator* actuator = new Actuator();
