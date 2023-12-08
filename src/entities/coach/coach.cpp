@@ -56,18 +56,39 @@ void Coach::runCoach() {
     // defines).
 
     // Example 1: here we get the ball position and set the BLUE and YELLOW player 0 to follow it
-    QVector2D ballPosition = getWorldMap()->ballPosition();
-    getPlayer(BLUE, 0).value()->goTo(ballPosition);
-    getPlayer(YELLOW, 0).value()->goTo(ballPosition);
+    //QVector2D ballPosition = getWorldMap()->ballPosition();
+    //getPlayer(BLUE, 0).value()->goTo(ballPosition);
+    //getPlayer(YELLOW, 0).value()->goTo(ballPosition);
 
     // Example 2: here we set the BLUE and YELLOW players 1 and 2 to rotate to the ball
-    getPlayer(BLUE, 1).value()->rotateTo(ballPosition);
-    getPlayer(BLUE, 2).value()->rotateTo(ballPosition);
-    getPlayer(YELLOW, 1).value()->rotateTo(ballPosition);
-    getPlayer(YELLOW, 2).value()->rotateTo(ballPosition);
+    //getPlayer(BLUE, 1).value()->rotateTo(ballPosition);
+    //getPlayer(BLUE, 2).value()->rotateTo(ballPosition);
+    //getPlayer(YELLOW, 1).value()->rotateTo(ballPosition);
+    //getPlayer(YELLOW, 2).value()->rotateTo(ballPosition);
 
-    getPlayer(BLUE, 3).value()->dribble(true);
-    getPlayer(YELLOW, 3).value()->dribble(true);
-    getPlayer(BLUE, 2).value()->dribble(true);
-    getPlayer(YELLOW, 2).value()->dribble(true);
+    //getPlayer(BLUE, 3).value()->dribble(true);
+    //getPlayer(YELLOW, 3).value()->dribble(true);
+    //getPlayer(BLUE, 2).value()->dribble(true);
+    //getPlayer(YELLOW, 2).value()->dribble(true);
+
+    //Coordenadas do ponto de rotação, raio e velocidade angular
+    QVector2D RotationCenter(2.766f, -1.539f);
+    float Radius = 1.0f;
+    //Calcula a distância que o robô está do ponto
+    QVector2D RobotPosition = getPlayer(YELLOW, 3).value()->getPosition();
+    QVector2D DistanceCenter = (RobotPosition - RotationCenter);
+    if (std::abs((DistanceCenter).length() - Radius) > 0.2){
+        //Robô vai para a borda do círculo
+        QVector2D VetorR = ((RobotPosition - RotationCenter)/(RobotPosition - RotationCenter).length()) * Radius;
+        QVector2D PositionOnCircle = RotationCenter + VetorR;
+        getPlayer(YELLOW, 3).value()->goTo(PositionOnCircle);
+    }else{
+        // Faz o robô continuar  rotação
+        // Calcula a nova posição no círculo
+        float CosNewAngle = ((DistanceCenter.x() / Radius)*cos(0.1)) - ((DistanceCenter.y() / Radius)*sin(0.1));
+        float SinNewAngle = ((DistanceCenter.y() / Radius)*cos(0.1)) + ((DistanceCenter.x() / Radius)*sin(0.1));
+        QVector2D NextPosition = RotationCenter + Radius*QVector2D(CosNewAngle,SinNewAngle);
+        ///Robô vai para nova posição
+        getPlayer(YELLOW, 3).value()->goTo(NextPosition);
+    }
 }
