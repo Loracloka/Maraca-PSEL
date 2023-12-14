@@ -51,6 +51,10 @@ bool Player::isTeamBlue() const {
     return _isTeamBlue;
 }
 
+bool Player::isDribbleOn() const {
+    return _isDribbleOn;
+}
+
 quint8 Player::getPlayerId() const {
     return _playerId;
 }
@@ -144,6 +148,9 @@ void Player::kick(const float kickSpeed, bool isChipped)
 
 void Player::dribble(const bool enable)
 {
+    // Atualiza o estado interno do drible
+    _isDribbleOn = enable;
+
     float dribbleSpeed = 0.0f;
     if (enable) {
         dribbleSpeed = DRIBBLE_SPEED;

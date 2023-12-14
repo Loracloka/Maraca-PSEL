@@ -90,6 +90,11 @@ public:
      */
     quint8 getPlayerId() const;
 
+    /*!
+     * \return True se o player ta com o drible ligado e falso se não.
+     */
+    bool isDribbleOn() const;
+
 protected:
     // Mark Coach as a friend class so it can call this methods from Player
     friend class Coach;
@@ -125,6 +130,7 @@ private:
     float _orientation;
     bool _isTeamBlue;
     quint8 _playerId;
+    bool _isDribbleOn;
 
     // Control management
     RobotControlPacket *_controlPacket;
