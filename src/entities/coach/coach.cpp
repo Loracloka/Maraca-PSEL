@@ -49,30 +49,45 @@ WorldMap* Coach::getWorldMap() {
     return _worldMap;
 }
 
+int estado = 0;
+
 void Coach::runCoach() {
-    //testando se função isDribbleOn funciona
-    getPlayer(YELLOW, 3).value()->dribble(true);
-    if (getPlayer(YELLOW, 3).value()->isDribbleOn() == true){
-        QVector2D ballPosition = getWorldMap()->ballPosition();
-        getPlayer(YELLOW, 3).value()->goTo(ballPosition);
+    QVector2D BallPosition = getWorldMap()->ballPosition();
+
+    if (estado == 0){ //Robô2 vai p posição de recebimento de bola
+        QVector2D Position2(-0.926f, -1.418f);
+        getPlayer(YELLOW, 2).value()->goTo(Position2);
+        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
+        if (std::abs((Robot2Position-Position2).length()) < 0.2){
+            estado++;
+        }
+    }
+    if (estado == 1){ //Robô2 liga o drible, Robô3 vai pegar bola
+        getPlayer(YELLOW, 2).value()->dribble(true);
+        getPlayer(YELLOW, 3).value()->dribble(true);
+        QVector2D Position3(0.0f,0.0f);
+        getPlayer(YELLOW, 3).value()->goTo(Position3);
+        QVector2D Robot3Position = getPlayer(YELLOW, 3).value()->getPosition();
+        QVector2D dist3ball = (Robot3Position - BallPosition);
+        if (std::abs((dist3ball).length()) < 0.16) {
+            estado++;
+        }
     }
 
+    if (estado == 2){ //robô2 olha pra bola, Robô3 olha pra Robô2 e passa a bola
+        getPlayer(YELLOW, 2).value()->rotateTo(BallPosition);
+        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
+        QVector2D Robot3Position = getPlayer(YELLOW, 3).value()->getPosition();
+        float orientacaoDesejada = atan2(Robot2Position.y() - Robot3Position.y(), Robot2Position.x() - Robot3Position.x());
+        float orientacaoAtual = getPlayer(YELLOW, 3).value()->getOrientation();
+        getPlayer(YELLOW, 3).value()->rotateTo(getPlayer(YELLOW, 2).value()->getPosition());
+        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.2) {
+            getPlayer(YELLOW, 3).value()->dribble(false);
+            getPlayer(YELLOW, 3).value()->kick(2.0f, false);
+        }
 
-//    QVector2D RobotPosition = getPlayer(YELLOW, 3).value()->getPosition();
-//    QVector2D BallPosition = getWorldMap()->ballPosition();
-//        if (std::abs((RobotPosition - BallPosition).length()) > 0.12){
-//            //Robô 1 olha pra bola e vai até ela
-//            getPlayer(YELLOW, 3).value()->rotateTo(BallPosition);
-//            getPlayer(YELLOW, 3).value()->dribble(true);
-//            QVector2D sideBall = BallPosition - 0.1116 * ((BallPosition - RobotPosition)/std::abs((BallPosition - RobotPosition).length()));
-//            getPlayer(YELLOW, 3).value()->goTo(sideBall);
-//        }
-
+    }
 }
-
-
-
-
 
     // Here you can control the robots freely.
     // Remember that the getPlayer(color, id) function can return a std::nullopt object, so
