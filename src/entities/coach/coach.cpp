@@ -68,8 +68,8 @@ void Coach::runCoach() {
         QVector2D Position3(0.0f,0.0f);
         getPlayer(YELLOW, 3).value()->goTo(Position3);
         QVector2D Robot3Position = getPlayer(YELLOW, 3).value()->getPosition();
-        QVector2D dist3ball = (Robot3Position - BallPosition);
-        if (std::abs((dist3ball).length()) < 0.16) {
+        QVector2D dist3center = (Robot3Position - Position3);
+        if (std::abs((dist3center).length()) < 0.1) {
             estado++;
         }
     }
@@ -81,11 +81,14 @@ void Coach::runCoach() {
         float orientacaoDesejada = atan2(Robot2Position.y() - Robot3Position.y(), Robot2Position.x() - Robot3Position.x());
         float orientacaoAtual = getPlayer(YELLOW, 3).value()->getOrientation();
         getPlayer(YELLOW, 3).value()->rotateTo(getPlayer(YELLOW, 2).value()->getPosition());
-        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.2) {
-            getPlayer(YELLOW, 3).value()->dribble(false);
-            getPlayer(YELLOW, 3).value()->kick(2.0f, false);
+        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.1) {
+            estado++;
         }
 
+    }
+    if (estado == 3){
+        getPlayer(YELLOW, 3).value()->dribble(false);
+        getPlayer(YELLOW, 3).value()->kick(2.0f, false);
     }
 }
 
