@@ -120,11 +120,16 @@ void Coach::runCoach() {
         }
     }
     if (estado == 6){ //Robô2 passa a bola
+        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
+        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
+        QVector2D blockpoint = (Robot2Position + ((Robot0Position - Robot2Position)/2)); //Ponto de interceptação
+        getPlayer(BLUE, 1).value()->rotateTo(BallPosition);
+        getPlayer(BLUE, 1).value()->dribble(true);
+        getPlayer(BLUE, 1).value()->goTo(blockpoint); //Intercepta a bola
         getPlayer(YELLOW, 0).value()->dribble(true);
         getPlayer(YELLOW, 2).value()->dribble(false);
         getPlayer(YELLOW, 0).value()->rotateTo(BallPosition);
         getPlayer(YELLOW, 2).value()->kick(3.5f, false);
-        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
         QVector2D dist0ball = (Robot0Position - BallPosition);
         if (std::abs((dist0ball).length()) < 0.2) {
             estado = 7;
