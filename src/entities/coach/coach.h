@@ -30,6 +30,10 @@
 #include <src/entities/player/player.h>
 #include <src/entities/worldmap/worldmap.h>
 
+#include <src/entities/player/goleiro.h>
+#include <src/entities/player/defesa.h>
+#include <src/entities/player/ataque.h>
+
 #include <spdlog/spdlog.h>
 
 #define COACH_ITERATION_INTERVAL_MS 16
@@ -70,9 +74,12 @@ private:
     QTimer *_actuatorTimer;
 
     // Internal variables
-    QMap<bool, QList<Player*>> _players;
-    WorldMap* _worldMap;
+    QMap<bool, QList<Player *>> _players;
+    WorldMap *_worldMap;
 
+    goleiro *_goleiro;
+    defesa *_defesa;
+    ataque *_ataque;
 private slots:
     /*!
      * \brief Iterate coach entity.

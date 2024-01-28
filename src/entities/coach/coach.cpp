@@ -28,6 +28,9 @@ Coach::Coach(const QMap<bool, QList<Player*>>& players, WorldMap* worldMap)
     _actuatorTimer = new QTimer(this);
     QObject::connect(_actuatorTimer, &QTimer::timeout, this, &Coach::runCoach);
     _actuatorTimer->start(COACH_ITERATION_INTERVAL_MS);
+    _goleiro = new goleiro(worldMap);
+    _defesa = new defesa(worldMap);
+    _ataque = new ataque(worldMap);
 }
 
 std::optional<Player*> Coach::getPlayer(const bool& isTeamBlue, const quint8& playerId) {
@@ -49,147 +52,98 @@ WorldMap* Coach::getWorldMap() {
     return _worldMap;
 }
 
-int estado = 0;
+int alerta = 0;
 
 void Coach::runCoach() {
-    QVector2D BallPosition = getWorldMap()->ballPosition();
-    QVector2D Goal = getWorldMap()->theirGoalCenter();
+    QVector2D ballPosition = getWorldMap()->ballPosition();
 
-    if (estado == 0){ //Robô2 vai p posição de recebimento de bola
-        QVector2D Position2(-0.926f, -1.418f);
-        getPlayer(YELLOW, 2).value()->goTo(Position2);
-        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
-        if (std::abs((Robot2Position-Position2).length()) < 0.2){
-            estado = 1;
-        }
+    QMap<quint8, std::optional<Player *>>players;
+    for (quint8 playerId = 0; playerId < 6; playerId++){
+        players.insert(playerId, getPlayer(YELLOW, playerId));
     }
-    if (estado == 1){ //Robô2 liga o drible, Robô3 vai pegar bola
-        getPlayer(YELLOW, 2).value()->dribble(true);
-        getPlayer(YELLOW, 3).value()->dribble(true);
-        QVector2D Position3(0.0f,0.0f);
-        getPlayer(YELLOW, 3).value()->goTo(Position3);
-        QVector2D Robot3Position = getPlayer(YELLOW, 3).value()->getPosition();
-        QVector2D dist3center = (Robot3Position - Position3);
-        if (std::abs((dist3center).length()) < 0.1) {
-            estado = 2;
+    for (quint8 playerId : players.keys()) {
+        if(players.value(playerId).has_value()){
+            if(playerId == 0){ //atacante
+                //player 0 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                _ataque->setPlayer(players.value(playerId).value());
+                QVector2D theirGoalCenter = getWorldMap()->theirGoalCenter();
+                QVector2D dist0ball = (ballPosition - players.value(playerId).value()->getPosition());
+                if ((std::abs((dist0ball).length()) < 0.7) && (std::abs(theirGoalCenter.x() - ballPosition.x()) > 0.5)){ //se a bola tiver perto, ele prepara p receber
+                    _ataque->receiveBall();
+                    players.value(playerId).value()->goTo(ballPosition);
+                }else {
+                    players.value(playerId).value()->goTo(QVector2D(0.0f, getWorldMap()->theirGoalCenter().y() + 1.0f));
+                }
+                if (std::abs((dist0ball).length()) < 0.12) {//se ele tiver com a bola, chuta pro gol
+                        _ataque->kickgoal(-0.3f);
+                }
+            }else if(playerId == 1){ //defesa
+                //player 1 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                _defesa->setPlayer(players.value(playerId).value());
+                QVector2D dist1ball = (ballPosition - players.value(playerId).value()->getPosition());
+                if (std::abs((dist1ball).length()) < 0.2){
+                    _defesa->pass(getPlayer(YELLOW, 0).value());
+                }else if (std::abs((dist1ball).length()) < 0.6) {
+                    players.value(playerId).value()->goTo(ballPosition);
+                }else{
+                    _defesa->wallPosition(0.5f);
+                }
+
+
+            }else if(playerId == 2){ //atacante
+                //player 2 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                _ataque->setPlayer(players.value(playerId).value());
+                QVector2D theirGoalCenter = getWorldMap()->theirGoalCenter();
+                QVector2D dist2ball = (ballPosition - players.value(playerId).value()->getPosition());
+                if ((std::abs((dist2ball).length()) < 0.7) && (std::abs(theirGoalCenter.x() - ballPosition.x()) > 0.5)){ //se a bola tiver perto, ele prepara p receber
+                    _ataque->receiveBall();
+                    players.value(playerId).value()->goTo(ballPosition);
+                }else {
+                    players.value(playerId).value()->goTo(QVector2D(0.0f, getWorldMap()->theirGoalCenter().y() - 1.0f));
+                }
+                if (std::abs((dist2ball).length()) < 0.12) {//se ele tiver com a bola, chuta pro gol
+                        _ataque->kickgoal(0.3f);
+                }
+            }else if(playerId == 3){ //central
+                //player 3 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                QVector2D distballcenter = (QVector2D(0.0f,0.0f) - ballPosition);
+                QVector2D dist3ball = (ballPosition - players.value(playerId).value()->getPosition());
+                //se tiver no inicio do jogo vai pra bola
+                if ((std::abs((distballcenter).length()) < 0.01)) {
+                    players.value(playerId).value()->goTo(ballPosition);
+                //se tiver perto da bola, passa pro atacante
+                }else if (std::abs((dist3ball).length()) < 0.12){
+                        _ataque->setPlayer(players.value(playerId).value());
+                        _ataque->pass(getPlayer(YELLOW, 2).value());
+                }
+            }else if(playerId == 4){ //defesa
+                //player 4 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                _defesa->setPlayer(players.value(playerId).value());
+                QVector2D dist4ball = (ballPosition - players.value(playerId).value()->getPosition());
+                if (std::abs((dist4ball).length()) < 0.12){
+                    _defesa->pass(getPlayer(YELLOW, 2).value());
+                }else if (std::abs((dist4ball).length()) < 0.6) {
+                    players.value(playerId).value()->goTo(ballPosition);
+                }else{
+                    _defesa->wallPosition(-0.5f);
+                }
+            }else if(playerId == 5){ //goleiro
+                //player 5 faz algo
+                players.value(playerId).value()->rotateTo(ballPosition);
+                _goleiro->setPlayer(players.value(playerId).value());
+                if (getWorldMap()->isInsideOurPenaltyArea(ballPosition)) {
+                    //pass
+                    _goleiro->pass(getPlayer(YELLOW, 4).value()); //passando para o jogador amigo mais próximo que por enquanto é o 4
+                }else{
+                    //defend
+                    _goleiro->defend();
+                }
+            }
         }
-    }
-    if (estado == 2){ //robô2 olha pra bola, Robô3 olha pra Robô2
-        getPlayer(YELLOW, 2).value()->dribble(true);
-        getPlayer(YELLOW, 3).value()->dribble(true);
-        getPlayer(YELLOW, 2).value()->rotateTo(BallPosition);
-        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
-        QVector2D Robot3Position = getPlayer(YELLOW, 3).value()->getPosition();
-        float orientacaoDesejada = atan2(Robot2Position.y() - Robot3Position.y(), Robot2Position.x() - Robot3Position.x());
-        float orientacaoAtual = getPlayer(YELLOW, 3).value()->getOrientation();
-        getPlayer(YELLOW, 3).value()->rotateTo(getPlayer(YELLOW, 2).value()->getPosition());
-        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.01) {
-            estado = 3;
-        }
-    }
-    if (estado == 3){ //Robô 3 passa a bola
-        getPlayer(YELLOW, 2).value()->dribble(true);
-        getPlayer(YELLOW, 3).value()->dribble(false);
-        getPlayer(YELLOW, 2).value()->rotateTo(BallPosition);
-        getPlayer(YELLOW, 3).value()->kick(3.0f, false);
-        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
-        QVector2D dist2ball = (Robot2Position - BallPosition);
-        if (std::abs((dist2ball).length()) < 0.2) {
-            estado = 4;
-        }
-    }
-    if (estado == 4){ //Manda Robô 0 p posição de recebimento de bola
-        QVector2D Position0(-3.145, 1.533f);
-        getPlayer(YELLOW, 0).value()->goTo(Position0);
-        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
-        if (std::abs((Robot0Position-Position0).length()) < 0.2){
-            estado = 5;
-        }
-    }
-    if (estado == 5){ //Robô0 olha pra bola, Robô2 olha pra Robô0
-        getPlayer(YELLOW, 0).value()->dribble(true);
-        getPlayer(YELLOW, 2).value()->dribble(true);
-        getPlayer(YELLOW, 0).value()->rotateTo(BallPosition);
-        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
-        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
-        float orientacaoDesejada = atan2(Robot0Position.y() - Robot2Position.y(), Robot0Position.x() - Robot2Position.x());
-        float orientacaoAtual = getPlayer(YELLOW, 2).value()->getOrientation();
-        getPlayer(YELLOW, 2).value()->rotateTo(getPlayer(YELLOW, 0).value()->getPosition());
-        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.01) {
-            estado = 6;
-        }
-    }
-    if (estado == 6){ //Robô2 passa a bola
-        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
-        QVector2D Robot2Position = getPlayer(YELLOW, 2).value()->getPosition();
-        QVector2D blockpoint = (Robot2Position + ((Robot0Position - Robot2Position)/2)); //Ponto de interceptação
-        getPlayer(BLUE, 1).value()->rotateTo(BallPosition);
-        getPlayer(BLUE, 1).value()->dribble(true);
-        getPlayer(BLUE, 1).value()->goTo(blockpoint); //Intercepta a bola
-        getPlayer(YELLOW, 0).value()->dribble(true);
-        getPlayer(YELLOW, 2).value()->dribble(false);
-        getPlayer(YELLOW, 0).value()->rotateTo(BallPosition);
-        getPlayer(YELLOW, 2).value()->kick(3.5f, false);
-        QVector2D dist0ball = (Robot0Position - BallPosition);
-        if (std::abs((dist0ball).length()) < 0.2) {
-            estado = 7;
-        }
-    }
-    if (estado == 7){
-        getPlayer(YELLOW, 0).value()->dribble(true);
-        QVector2D Robot0Position = getPlayer(YELLOW, 0).value()->getPosition();
-        float orientacaoDesejada = atan2(Goal.y() - Robot0Position.y(), Goal.x() - Robot0Position.x());
-        float orientacaoAtual = getPlayer(YELLOW, 0).value()->getOrientation();
-        getPlayer(YELLOW, 0).value()->rotateTo(Goal);
-        if (std::abs(orientacaoAtual - orientacaoDesejada) < 0.01) {
-            estado = 8;
-        }
-    }
-    if (estado == 8){
-        getPlayer(YELLOW, 0).value()->dribble(false);
-        getPlayer(YELLOW, 0).value()->kick(3.0f, false);
     }
 }
-
-    // Here you can control the robots freely.
-    // Remember that the getPlayer(color, id) function can return a std::nullopt object, so
-    // be careful when you use it (remember to only use ids from 0-2 and the BLUE and YELLOW
-    // defines).
-
-    // Example 1: here we get the ball position and set the BLUE and YELLOW player 0 to follow it
-    //QVector2D ballPosition = getWorldMap()->ballPosition();
-    //getPlayer(BLUE, 0).value()->goTo(ballPosition);
-    //getPlayer(YELLOW, 0).value()->goTo(ballPosition);
-
-    // Example 2: here we set the BLUE and YELLOW players 1 and 2 to rotate to the ball
-    //getPlayer(BLUE, 1).value()->rotateTo(ballPosition);
-    //getPlayer(BLUE, 2).value()->rotateTo(ballPosition);
-    //getPlayer(YELLOW, 1).value()->rotateTo(ballPosition);
-    //getPlayer(YELLOW, 2).value()->rotateTo(ballPosition);
-
-    //getPlayer(BLUE, 3).value()->dribble(true);
-    //getPlayer(YELLOW, 3).value()->dribble(true);
-    //getPlayer(BLUE, 2).value()->dribble(true);
-    //getPlayer(YELLOW, 2).value()->dribble(true);
-
-    //Coordenadas do ponto de rotação, raio e velocidade angular
-    //QVector2D RotationCenter(2.766f, -1.539f);
-    //float Radius = 1.0f;
-    //Calcula a distância que o robô está do ponto
-    //QVector2D RobotPosition = getPlayer(YELLOW, 3).value()->getPosition();
-    //QVector2D DistanceCenter = (RobotPosition - RotationCenter);
-    //if (std::abs((DistanceCenter).length() - Radius) > 0.2){
-        //Robô vai para a borda do círculo
-    //    QVector2D VetorR = ((RobotPosition - RotationCenter)/(RobotPosition - RotationCenter).length()) * Radius;
-    //    QVector2D PositionOnCircle = RotationCenter + VetorR;
-    //    getPlayer(YELLOW, 3).value()->goTo(PositionOnCircle);
-    //}else{
-        // Faz o robô continuar  rotação
-        // Calcula a nova posição no círculo
-    //    float CosNewAngle = ((DistanceCenter.x() / Radius)*cos(0.1)) - ((DistanceCenter.y() / Radius)*sin(0.1));
-    //    float SinNewAngle = ((DistanceCenter.y() / Radius)*cos(0.1)) + ((DistanceCenter.x() / Radius)*sin(0.1));
-    //    QVector2D NextPosition = RotationCenter + Radius*QVector2D(CosNewAngle,SinNewAngle);
-        //Robô vai para nova posição
-    //    getPlayer(YELLOW, 3).value()->goTo(NextPosition);
-    //}
-
