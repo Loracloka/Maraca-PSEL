@@ -64,15 +64,15 @@ float WorldMap::goalWidth() const {
 }
 
 float WorldMap::penaltyDepth() const {
-    return 0.15f;
+    return 1.00f;
 }
 
 float WorldMap::penaltyWidth() const {
-    return 0.7f;
+    return 2.00f;
 }
 
 float WorldMap::penaltyMarkDistanceFromGoal() const {
-    return 0.1125f;
+    return 3.0f;
 }
 
 float WorldMap::centerRadius() const {
@@ -132,6 +132,56 @@ QVector2D WorldMap::theirPenaltyMark() const {
 
 QVector2D WorldMap::ballPosition() const {
     return QVector2D(_ball.x() / 1000.0f, _ball.y() / 1000.0f);
+}
+
+bool WorldMap::isInsideOurPenaltyArea(QVector2D position) const
+{
+    if (!playingLeftSide()){
+        QVector2D topLeft(ourGoalCenter().x() - penaltyDepth(), penaltyWidth() / 2);
+        QVector2D bottomRight(ourGoalCenter().x(), -(penaltyWidth() / 2));
+
+        if(position.x() >= topLeft.x() && position.x() <= bottomRight.x()) {
+            if(position.y() <= topLeft.y() && position.y() >= bottomRight.y()){
+                return true;
+            }
+        }
+        return false;
+    }else{
+        QVector2D topLeft(ourGoalCenter().x(), penaltyWidth() / 2);
+        QVector2D bottomRight(ourGoalCenter().x() + penaltyDepth(), -(penaltyWidth() / 2));
+
+        if(position.x() >= topLeft.x() && position.x() <= bottomRight.x()) {
+            if(position.y() <= topLeft.y() && position.y() >= bottomRight.y()){
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+bool WorldMap::isInsideTheirPenaltyArea(QVector2D position) const
+{
+    if (playingLeftSide()){
+        QVector2D topLeft(theirGoalCenter().x() - penaltyDepth(), penaltyWidth() / 2);
+        QVector2D bottomRight(theirGoalCenter().x(), -(penaltyWidth() / 2));
+
+        if(position.x() >= topLeft.x() && position.x() <= bottomRight.x()) {
+            if(position.y() <= topLeft.y() && position.y() >= bottomRight.y()){
+                return true;
+            }
+        }
+        return false;
+    }else{
+        QVector2D topLeft(theirGoalCenter().x(), penaltyWidth() / 2);
+        QVector2D bottomRight(theirGoalCenter().x() + penaltyDepth(), -(penaltyWidth() / 2));
+
+        if(position.x() >= topLeft.x() && position.x() <= bottomRight.x()) {
+            if(position.y() <= topLeft.y() && position.y() >= bottomRight.y()){
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 void WorldMap::updateBallDetection(const SSL_DetectionBall &ball)
