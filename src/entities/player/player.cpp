@@ -33,6 +33,7 @@ Player::Player(const bool& isTeamBlue, const quint8& playerId)
     _lastError = 0.0f;
     _cumulativeError = 0.0f;
     _controlPacket = new RobotControlPacket(isTeamBlue, playerId, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    _isDribbleOn = false;
 }
 
 bool Player::isMissing() const {

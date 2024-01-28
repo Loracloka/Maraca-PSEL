@@ -44,6 +44,9 @@ SOURCES += \
         main.cpp \
         src/entities/actuator/actuator.cpp \
         src/entities/coach/coach.cpp \
+        src/entities/player/ataque.cpp \
+        src/entities/player/defesa.cpp \
+        src/entities/player/goleiro.cpp \
         src/entities/player/player.cpp \
         src/entities/vision/vision.cpp \
         src/entities/worldmap/worldmap.cpp \
@@ -67,6 +70,9 @@ HEADERS += \
     include/proto/ssl_vision_wrapper.pb.h \
     src/entities/actuator/actuator.h \
     src/entities/coach/coach.h \
+    src/entities/player/ataque.h \
+    src/entities/player/defesa.h \
+    src/entities/player/goleiro.h \
     src/entities/player/player.h \
     src/entities/vision/vision.h \
     src/entities/worldmap/worldmap.h \
